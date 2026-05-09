@@ -1,9 +1,11 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <cstdlib>
+#include <ctime>
 const char* brickBG = "../assets/brick.bmp";
-
 int main()
 {
+    std::srand((unsigned int)std::time(nullptr));
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Surface *surface;
@@ -32,6 +34,8 @@ int main()
     }
     SDL_DestroySurface(surface);
 
+    Uint64 lastChange = SDL_GetTicks();
+    Uint8 r = 0, g = 0, b = 0;
     bool quit_the_app = false;
     while (!quit_the_app) {
         SDL_PollEvent(&event);
@@ -45,16 +49,30 @@ int main()
                 quit_the_app = true;
             }
         }
-        SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
+        Uint64 now = SDL_GetTicks();
+
+        if (now - lastChange >= 2000)
+        {
+            r = rand() % 256;
+            g = rand() % 256;
+            b = rand() % 256;
+
+            lastChange = now;
+        }
+
+        // Set draw color
+        SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+
+        // Clear screen with current color
         SDL_RenderClear(renderer);
-        SDL_RenderTexture(renderer, texture, NULL, NULL);
+
+        // Present result
         SDL_RenderPresent(renderer);
     }
 
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-
     SDL_Quit();
 
     return 0;
