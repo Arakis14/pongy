@@ -7,8 +7,8 @@ int main()
 {
     std::srand((unsigned int)std::time(nullptr));
     SDL_Window *window;
+    SDL_FRect r;
     SDL_Renderer *renderer;
-    SDL_Surface *surface;
     SDL_Texture *texture;
     SDL_Event event;
 
@@ -22,21 +22,12 @@ int main()
         return 3;
     }
 
-    surface = SDL_LoadBMP(brickBG);
-    if (!surface) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface from image: %s", SDL_GetError());
-        return 3;
-    }
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!texture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture from surface: %s", SDL_GetError());
-        return 3;
-    }
-    SDL_DestroySurface(surface);
-
-    Uint64 lastChange = SDL_GetTicks();
-    Uint8 r = 0, g = 0, b = 0;
     bool quit_the_app = false;
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1024, 768);
+    r.w = 50;
+    r.h = 150;
+    r.x = 50;
+    r.y = 50;
     while (!quit_the_app) {
         SDL_PollEvent(&event);
         if (event.type == SDL_EVENT_QUIT) {
@@ -49,24 +40,14 @@ int main()
                 quit_the_app = true;
             }
         }
-        Uint64 now = SDL_GetTicks();
-
-        if (now - lastChange >= 2000)
-        {
-            r = rand() % 256;
-            g = rand() % 256;
-            b = rand() % 256;
-
-            lastChange = now;
-        }
-
-        // Set draw color
-        SDL_SetRenderDrawColor(renderer, r, g, b, 255);
-
-        // Clear screen with current color
+        SDL_SetRenderTarget(renderer, texture);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-
-        // Present result
+        SDL_RenderRect(renderer,&r);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &r);
+        SDL_SetRenderTarget(renderer, NULL);
+        SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
     }
 
