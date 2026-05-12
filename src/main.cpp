@@ -3,11 +3,26 @@
 #include <cstdlib>
 #include <ctime>
 const char* brickBG = "../assets/brick.bmp";
+
+void  increaseHeight(SDL_FRect& paddle)
+{
+    paddle.y -= 2;
+    //DEBUG
+    //SDL_Log("New paddle y: %f, paddle.y);
+}
+
+void  decreaseHeight(SDL_FRect& paddle)
+{
+    paddle.y += 2;
+    //DEBUG
+    //SDL_Log("New paddle y: %f, paddle.y);
+}
+
 int main()
 {
     std::srand((unsigned int)std::time(nullptr));
     SDL_Window *window;
-    SDL_FRect r;
+    SDL_FRect paddle1 = {50, 50, 50, 100};
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     SDL_Event event;
@@ -24,10 +39,6 @@ int main()
 
     bool quit_the_app = false;
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1024, 768);
-    r.w = 50;
-    r.h = 150;
-    r.x = 50;
-    r.y = 50;
     while (!quit_the_app) {
         SDL_PollEvent(&event);
         if (event.type == SDL_EVENT_QUIT) {
@@ -35,17 +46,26 @@ int main()
         }
         if (event.type == SDL_EVENT_KEY_DOWN) {
             /* the pressed key was Escape? */
-            SDL_Log("Key pressed");
+            SDL_Log("Key %s pressed", SDL_GetKeyName(event.key.key));
             if (event.key.key == SDLK_ESCAPE) {
                 quit_the_app = true;
             }
+            else if(event.key.key == SDLK_DOWN || event.key.key == SDLK_S)
+            {
+                decreaseHeight(paddle1);
+            }
+            else if(event.key.key == SDLK_UP || event.key.key == SDLK_W)
+            {
+                increaseHeight(paddle1);
+            }
+
         }
         SDL_SetRenderTarget(renderer, texture);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        SDL_RenderRect(renderer,&r);
+        SDL_RenderRect(renderer,&paddle1);
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &r);
+        SDL_RenderFillRect(renderer, &paddle1);
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
