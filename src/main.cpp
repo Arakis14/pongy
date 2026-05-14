@@ -32,7 +32,9 @@ void  decreaseHeight(SDL_FRect& paddle)
 int main()
 {
     SDL_Window *window;
-    SDL_FRect paddle1 = {50, 50, 50, 100};
+    SDL_FRect paddleLeft = {50, 50, 50, 100};
+    SDL_FRect paddleRight = {924, 50, 50, 100};
+    SDL_FRect ball = {512, 360, 6.25, 6.25};
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     SDL_Event event;
@@ -65,25 +67,42 @@ int main()
             if (event.key.key == SDLK_ESCAPE) {
                 quit_the_app = true;
             }
-            else if(event.key.key == SDLK_DOWN || event.key.key == SDLK_S)
-            {
-                if(checkHeight(paddle1) < resolutionWidth - paddle1.h) {
-                    decreaseHeight(paddle1);
+            else if(event.key.key == SDLK_DOWN) {
+                if(checkHeight(paddleRight) < resolutionWidth - paddleRight.h) {
+                    decreaseHeight(paddleRight);
                 }
             }
-            else if(event.key.key == SDLK_UP || event.key.key == SDLK_W)
-            {
-                if(checkHeight(paddle1) > 0.00) {
-                    increaseHeight(paddle1);
+            else if(event.key.key == SDLK_UP) {
+                if(checkHeight(paddleRight) > 0.00) {
+                    increaseHeight(paddleRight);
+                }
+            }
+            else if (event.key.key == SDLK_S) {
+                if(checkHeight(paddleLeft) < resolutionWidth - paddleLeft.h) {
+                    decreaseHeight(paddleLeft);
+                }
+            }
+            else if (event.key.key == SDLK_W) {
+                if(checkHeight(paddleLeft) > 0.00) {
+                    increaseHeight(paddleLeft);
                 }
             }
         }
         SDL_SetRenderTarget(renderer, texture);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        SDL_RenderRect(renderer,&paddle1);
+        //render left paddle
+        SDL_RenderRect(renderer,&paddleLeft);
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &paddle1);
+        SDL_RenderFillRect(renderer, &paddleLeft);
+        //render right paddle
+        SDL_RenderRect(renderer,&paddleRight);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &paddleRight);
+        //render ball
+        SDL_RenderRect(renderer,&ball);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &ball);
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
