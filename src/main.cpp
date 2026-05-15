@@ -6,9 +6,17 @@
 const char* brickBG = "../assets/brick.bmp";
 //userinput speed?
 const uint8_t speedMulti = 1;
+const uint8_t ballSpeed = 2;
 double deltaTime = 0;
-const uint16_t resolutionHeight = 1024;
-const uint16_t resolutionWidth = 768;
+const uint16_t resolutionWidth = 1024;
+const uint16_t resolutionHeight = 768;
+
+// (1, 0) represents the direction to the right, (0, 1) represents the direction down
+struct Vec2
+{
+    float x = 0;
+    float y = 0;
+};
 
 double checkHeight(SDL_FRect& paddle)
 {
@@ -29,12 +37,35 @@ void  decreaseHeight(SDL_FRect& paddle)
     //SDL_Log("New paddle y: %f", paddle.y);
 }
 
+
+void changeBallPosition(SDL_FRect& ball, Vec2& velocity)
+{
+    ball.x += velocity.x * deltaTime;
+    ball.y += velocity.y * deltaTime;
+
+    // Top wall
+    if (ball.y <= 0)
+    {
+        ball.y = ball.h;
+        velocity.y = -velocity.y;
+    }
+
+    // Bottom wall
+    if (ball.y + ball.h >= resolutionHeight )
+    {
+        ball.y = resolutionHeight - ball.h;
+        velocity.y *= -1;
+    }
+}
+
 int main()
 {
     SDL_Window *window;
     SDL_FRect paddleLeft = {50, 50, 50, 100};
     SDL_FRect paddleRight = {924, 50, 50, 100};
-    SDL_FRect ball = {512, 360, 6.25, 6.25};
+    SDL_FRect ball = {512, 360, 15, 15};
+    //Note: make rand starting velocity
+    Vec2 ballVelocity = {0,0.1};
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     SDL_Event event;
@@ -45,7 +76,7 @@ int main()
         return 3;
     }
 
-    if (!SDL_CreateWindowAndRenderer("Hello SDL", resolutionHeight, resolutionWidth, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("Hello SDL", resolutionWidth, resolutionHeight, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
         return 3;
     }
@@ -68,7 +99,7 @@ int main()
                 quit_the_app = true;
             }
             else if(event.key.key == SDLK_DOWN) {
-                if(checkHeight(paddleRight) < resolutionWidth - paddleRight.h) {
+                if(checkHeight(paddleRight) < resolutionHeight - paddleRight.h) {
                     decreaseHeight(paddleRight);
                 }
             }
@@ -78,7 +109,7 @@ int main()
                 }
             }
             else if (event.key.key == SDLK_S) {
-                if(checkHeight(paddleLeft) < resolutionWidth - paddleLeft.h) {
+                if(checkHeight(paddleLeft) < resolutionHeight - paddleLeft.h) {
                     decreaseHeight(paddleLeft);
                 }
             }
@@ -106,6 +137,8 @@ int main()
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
+        //loop
+        changeBallPosition(ball, ballVelocity);
     }
 
     SDL_DestroyTexture(texture);
