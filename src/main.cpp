@@ -5,8 +5,7 @@
 
 const char* brickBG = "../assets/brick.bmp";
 //userinput speed?
-const uint8_t speedMulti = 1;
-const uint8_t ballSpeed = 2;
+const uint8_t speedMulti = 2;
 double deltaTime = 0;
 const uint16_t resolutionWidth = 1024;
 const uint16_t resolutionHeight = 768;
@@ -37,8 +36,13 @@ void  decreaseHeight(SDL_FRect& paddle)
     //SDL_Log("New paddle y: %f", paddle.y);
 }
 
+void resetBall(SDL_FRect& ball)
+{
+    ball.x = 512;
+    ball.y = 360;
+}
 
-void changeBallPosition(SDL_FRect& ball, Vec2& velocity)
+void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, SDL_FRect& paddleRight)
 {
     ball.x += velocity.x * deltaTime;
     ball.y += velocity.y * deltaTime;
@@ -47,7 +51,7 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity)
     if (ball.y <= 0)
     {
         ball.y = ball.h;
-        velocity.y = -velocity.y;
+        velocity.y *= -1;
     }
 
     // Bottom wall
@@ -55,6 +59,32 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity)
     {
         ball.y = resolutionHeight - ball.h;
         velocity.y *= -1;
+    }
+    // Left wall
+    if (ball.x + ball.w >= resolutionWidth) 
+    {
+        resetBall(ball);
+    }
+
+    if (ball.x <= 0) 
+    {
+        resetBall(ball);
+    }
+
+    //paddleLeft collision
+    if (ball.y - (paddleLeft.y - 20) >= 5  && ball.x - paddleLeft.x <= 5)
+    {
+        velocity.y *= -1;
+        velocity.x *= -1;
+    }
+
+    //paddleRight collision
+    if (ball.y - (paddleRight.y + 20) <= 5  && ball.x - paddleRight.x >= 5)
+    {
+        //DEBUG
+        SDL_Log("*********Collision!**********");
+        velocity.y *= -1;
+        velocity.x *= -1;
     }
 }
 
@@ -65,7 +95,8 @@ int main()
     SDL_FRect paddleRight = {924, 50, 50, 100};
     SDL_FRect ball = {512, 360, 15, 15};
     //Note: make rand starting velocity
-    Vec2 ballVelocity = {0,0.1};
+    //float randomSeed = SDL_randf();
+    Vec2 ballVelocity = {0.1, 0.1};
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     SDL_Event event;
@@ -138,7 +169,12 @@ int main()
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
         //loop
-        changeBallPosition(ball, ballVelocity);
+        changeBallPosition(ball, ballVelocity, paddleLeft, paddleRight);
+        //DEBUG
+        SDL_Log("paddleRight.x %f", paddleRight.x);
+        SDL_Log("paddleRight.y %f", paddleRight.y);
+        SDL_Log("ball.x %f", ball.x);
+        SDL_Log("ball.y %f", ball.y);
     }
 
     SDL_DestroyTexture(texture);
