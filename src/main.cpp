@@ -9,6 +9,8 @@ const uint8_t speedMulti = 2;
 double deltaTime = 0;
 const uint16_t resolutionWidth = 1024;
 const uint16_t resolutionHeight = 768;
+uint8_t scorePlayer1 = 0;
+uint8_t scorePlayer2 = 0;
 
 // (1, 0) represents the direction to the right, (0, 1) represents the direction down
 struct Vec2
@@ -63,29 +65,33 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, 
     // Left wall
     if (ball.x + ball.w >= resolutionWidth) 
     {
+        scorePlayer2++;
         resetBall(ball);
     }
-
+    //Right wall
     if (ball.x <= 0) 
     {
+        scorePlayer1++;
         resetBall(ball);
     }
 
-    //paddleLeft collision
-    if (ball.y - (paddleLeft.y - 20) >= 5  && ball.x - paddleLeft.x <= 5)
+    if (SDL_HasRectIntersectionFloat(&ball, &paddleLeft))
     {
-        velocity.y *= -1;
-        velocity.x *= -1;
+        velocity.x = std::abs(velocity.x);
+        ball.x = paddleLeft.x + paddleLeft.w;
     }
 
-    //paddleRight collision
-    if (ball.y - (paddleRight.y + 20) <= 5  && ball.x - paddleRight.x >= 5)
+    if (SDL_HasRectIntersectionFloat(&ball, &paddleRight))
     {
-        //DEBUG
-        SDL_Log("*********Collision!**********");
-        velocity.y *= -1;
-        velocity.x *= -1;
+        velocity.x = -std::abs(velocity.x);
+        ball.x = paddleRight.x - ball.w;
     }
+
+}
+
+bool checkIfGameOver()
+{
+    return (scorePlayer1 >=3 || scorePlayer2 >= 3);
 }
 
 int main()
@@ -170,6 +176,9 @@ int main()
         SDL_RenderPresent(renderer);
         //loop
         changeBallPosition(ball, ballVelocity, paddleLeft, paddleRight);
+        if (checkIfGameOver()) {
+            break;
+        }
         //DEBUG
         SDL_Log("paddleRight.x %f", paddleRight.x);
         SDL_Log("paddleRight.y %f", paddleRight.y);
