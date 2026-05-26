@@ -1,7 +1,9 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>
 #include <cstdlib>
+#include "Text.cpp"
 
 const char* brickBG = "../assets/brick.bmp";
 //userinput speed?
@@ -108,6 +110,8 @@ int main()
     SDL_Event event;
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;
+    TTF_Init();
+    Text TextExample{"Hello World"};
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
         return 3;
@@ -186,6 +190,7 @@ int main()
         SDL_Log("ball.y %f", ball.y);
     }
 
+    TTF_Quit();
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
