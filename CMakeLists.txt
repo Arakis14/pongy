@@ -4,7 +4,7 @@ project(pongy)
 find_package(SDL3 REQUIRED)
 find_package(SDL3_ttf REQUIRED)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/Text.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
 get_property(importedTargets DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS)
 

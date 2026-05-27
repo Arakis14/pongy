@@ -3,9 +3,8 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>
 #include <cstdlib>
-#include "Text.cpp"
+#include "Text.hpp"
 
-const char* brickBG = "../assets/brick.bmp";
 //userinput speed?
 const uint8_t speedMulti = 2;
 double deltaTime = 0;
@@ -98,6 +97,7 @@ bool checkIfGameOver()
 
 int main()
 {
+    SDL_Color textColor = {255, 255, 255, 255};
     SDL_Window *window;
     SDL_FRect paddleLeft = {50, 50, 50, 100};
     SDL_FRect paddleRight = {924, 50, 50, 100};
@@ -108,10 +108,20 @@ int main()
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     SDL_Event event;
+    Text TextExample{"Hello World"};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(TextExample.getFont(), TextExample.getText().c_str(), 0, textColor);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer,textSurface);
+    SDL_FRect dstRect{
+        100.0f,
+        100.0f,
+        static_cast<float>(textSurface->w),
+        static_cast<float>(textSurface->h)
+    };
+
+    SDL_DestroySurface(textSurface);
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;
     TTF_Init();
-    Text TextExample{"Hello World"};
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
         return 3;
@@ -178,6 +188,7 @@ int main()
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
+        SDL_RenderTexture(renderer, textTexture, nullptr, &dstRect);
         //loop
         changeBallPosition(ball, ballVelocity, paddleLeft, paddleRight);
         if (checkIfGameOver()) {
@@ -189,11 +200,12 @@ int main()
         SDL_Log("ball.x %f", ball.x);
         SDL_Log("ball.y %f", ball.y);
     }
-
-    TTF_Quit();
+    SDL_DestroyTexture(textTexture);
+    TTF_CloseFont(TextExample.getFont());
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
     SDL_Quit();
 
     return 0;
