@@ -3,13 +3,13 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>
 #include <cstdlib>
-#include "Text.hpp"
 
 //userinput speed?
 const uint8_t speedMulti = 2;
 double deltaTime = 0;
 const uint16_t resolutionWidth = 1024;
 const uint16_t resolutionHeight = 768;
+const char* fontPath = "../assets/Roboto-Medium.ttf";
 uint8_t scorePlayer1 = 0;
 uint8_t scorePlayer2 = 0;
 
@@ -97,7 +97,9 @@ bool checkIfGameOver()
 
 int main()
 {
-    SDL_Color textColor = {255, 255, 255, 255};
+    //initialize variables
+    bool quit_the_app = false;
+    SDL_Color whiteColour = {255, 255, 255, 255};
     SDL_Window *window;
     SDL_FRect paddleLeft = {50, 50, 50, 100};
     SDL_FRect paddleRight = {924, 50, 50, 100};
@@ -108,9 +110,30 @@ int main()
     SDL_Renderer *renderer;
     SDL_Texture *texture;
     SDL_Event event;
-    Text TextExample{"Hello World"};
-    SDL_Surface* textSurface = TTF_RenderText_Blended(TextExample.getFont(), TextExample.getText().c_str(), 0, textColor);
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer,textSurface);
+    SDL_Surface* textSurface;
+    TTF_Font* font;
+
+    Uint64 NOW = SDL_GetPerformanceCounter();
+    Uint64 LAST = 0;
+    TTF_Init();
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
+        return 3;
+    }
+    //window
+    if (!SDL_CreateWindowAndRenderer("Hello SDL", resolutionWidth, resolutionHeight, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
+        return 3;
+    }
+    //font
+    font = TTF_OpenFont(fontPath, 48.0f);
+    //text surface
+    textSurface = TTF_RenderText_Blended(font, "Stub", 0, whiteColour);
+
+    //texture
+    texture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    //texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1024, 768);
+
     SDL_FRect dstRect{
         100.0f,
         100.0f,
@@ -119,21 +142,7 @@ int main()
     };
 
     SDL_DestroySurface(textSurface);
-    Uint64 NOW = SDL_GetPerformanceCounter();
-    Uint64 LAST = 0;
-    TTF_Init();
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
-        return 3;
-    }
 
-    if (!SDL_CreateWindowAndRenderer("Hello SDL", resolutionWidth, resolutionHeight, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
-        return 3;
-    }
-
-    bool quit_the_app = false;
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1024, 768);
     while (!quit_the_app) {
         LAST = NOW;
         NOW = SDL_GetPerformanceCounter();
@@ -186,9 +195,9 @@ int main()
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &ball);
         SDL_SetRenderTarget(renderer, NULL);
-        SDL_RenderTexture(renderer, texture, NULL, NULL);
+        //SDL_RenderTexture(renderer, texture, NULL, NULL);
+        SDL_RenderTexture(renderer, texture, nullptr, &dstRect);
         SDL_RenderPresent(renderer);
-        SDL_RenderTexture(renderer, textTexture, nullptr, &dstRect);
         //loop
         changeBallPosition(ball, ballVelocity, paddleLeft, paddleRight);
         if (checkIfGameOver()) {
@@ -200,8 +209,7 @@ int main()
         SDL_Log("ball.x %f", ball.x);
         SDL_Log("ball.y %f", ball.y);
     }
-    SDL_DestroyTexture(textTexture);
-    TTF_CloseFont(TextExample.getFont());
+    TTF_CloseFont(font);
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
