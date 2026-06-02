@@ -3,6 +3,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>
 #include <cstdlib>
+#include <string>
 
 //userinput speed?
 const uint8_t speedMulti = 2;
@@ -12,6 +13,11 @@ const uint16_t resolutionHeight = 768;
 const char* fontPath = "../assets/Roboto-Medium.ttf";
 uint8_t scorePlayer1 = 0;
 uint8_t scorePlayer2 = 0;
+SDL_Surface* textSurface1;
+SDL_Surface* textSurface2;
+SDL_Texture *texture1;
+SDL_Texture *texture2;
+bool scoreChanged = false;
 
 // (1, 0) represents the direction to the right, (0, 1) represents the direction down
 struct Vec2
@@ -67,12 +73,14 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, 
     if (ball.x + ball.w >= resolutionWidth) 
     {
         scorePlayer2++;
+        scoreChanged = true;
         resetBall(ball);
     }
     //Right wall
     if (ball.x <= 0) 
     {
         scorePlayer1++;
+        scoreChanged = true;
         resetBall(ball);
     }
 
@@ -95,6 +103,16 @@ bool checkIfGameOver()
     return (scorePlayer1 >=3 || scorePlayer2 >= 3);
 }
 
+SDL_Surface* createSurface(TTF_Font* font, uint8_t& score, SDL_Color colour)
+{
+    return TTF_RenderText_Blended(font, std::to_string(score).c_str(), 0, colour);
+}
+
+SDL_Texture* createTexture(SDL_Renderer* renderer, SDL_Surface* surface)
+{
+    return SDL_CreateTextureFromSurface(renderer, surface);
+}
+
 int main()
 {
     //initialize variables
@@ -108,9 +126,7 @@ int main()
     //float randomSeed = SDL_randf();
     Vec2 ballVelocity = {0.1, 0.1};
     SDL_Renderer *renderer;
-    SDL_Texture *texture;
     SDL_Event event;
-    SDL_Surface* textSurface;
     TTF_Font* font;
 
     Uint64 NOW = SDL_GetPerformanceCounter();
@@ -128,22 +144,40 @@ int main()
     //font
     font = TTF_OpenFont(fontPath, 48.0f);
     //text surface
-    textSurface = TTF_RenderText_Blended(font, "Stub", 0, whiteColour);
+    textSurface1 = createSurface(font, scorePlayer1, whiteColour);
+    textSurface2 = createSurface(font, scorePlayer2, whiteColour);
+    //textSurface1 = TTF_RenderText_Blended(font, std::to_string(scorePlayer1).c_str(), 0, whiteColour);
+    //textSurface2 = TTF_RenderText_Blended(font, std::to_string(scorePlayer2).c_str(), 0, whiteColour);
 
     //texture
-    texture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    //texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1024, 768);
+    texture1 = createTexture(renderer, textSurface1);
+    texture2 = createTexture(renderer, textSurface2);
 
-    SDL_FRect dstRect{
+    SDL_FRect dstRect1{
+        150.0f,
         100.0f,
-        100.0f,
-        static_cast<float>(textSurface->w),
-        static_cast<float>(textSurface->h)
+        static_cast<float>(textSurface1->w),
+        static_cast<float>(textSurface1->h)
     };
 
-    SDL_DestroySurface(textSurface);
+    SDL_FRect dstRect2{
+        850.0f,
+        100.0f,
+        static_cast<float>(textSurface2->w),
+        static_cast<float>(textSurface2->h)
+    };
+
+    SDL_DestroySurface(textSurface1);
+    SDL_DestroySurface(textSurface2);
 
     while (!quit_the_app) {
+        if(scoreChanged) {
+            textSurface1 = createSurface(font, scorePlayer1, whiteColour);
+            textSurface2 = createSurface(font, scorePlayer2, whiteColour);
+            texture1 = createTexture(renderer, textSurface1);
+            texture2 = createTexture(renderer, textSurface2);
+            scoreChanged = false;
+        }
         LAST = NOW;
         NOW = SDL_GetPerformanceCounter();
 
@@ -179,7 +213,8 @@ int main()
                 }
             }
         }
-        SDL_SetRenderTarget(renderer, texture);
+        SDL_SetRenderTarget(renderer, texture1);
+        SDL_SetRenderTarget(renderer, texture2);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         //render left paddle
@@ -196,7 +231,8 @@ int main()
         SDL_RenderFillRect(renderer, &ball);
         SDL_SetRenderTarget(renderer, NULL);
         //SDL_RenderTexture(renderer, texture, NULL, NULL);
-        SDL_RenderTexture(renderer, texture, nullptr, &dstRect);
+        SDL_RenderTexture(renderer, texture1, nullptr, &dstRect1);
+        SDL_RenderTexture(renderer, texture2, nullptr, &dstRect2);
         SDL_RenderPresent(renderer);
         //loop
         changeBallPosition(ball, ballVelocity, paddleLeft, paddleRight);
@@ -210,7 +246,8 @@ int main()
         SDL_Log("ball.y %f", ball.y);
     }
     TTF_CloseFont(font);
-    SDL_DestroyTexture(texture);
+    SDL_DestroyTexture(texture1);
+    SDL_DestroyTexture(texture2);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_Quit();
