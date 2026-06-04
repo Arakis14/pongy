@@ -31,14 +31,14 @@ double checkHeight(SDL_FRect& paddle)
     return paddle.y;
 }
 
-void  increaseHeight(SDL_FRect& paddle)
+void increaseHeight(SDL_FRect& paddle)
 {
     paddle.y -= 2 * speedMulti * deltaTime;
     //DEBUG
     //SDL_Log("New paddle y: %f", paddle.y);
 }
 
-void  decreaseHeight(SDL_FRect& paddle)
+void decreaseHeight(SDL_FRect& paddle)
 {
     paddle.y += 2 * speedMulti * deltaTime;
     //DEBUG
@@ -50,6 +50,25 @@ void resetBall(SDL_FRect& ball)
     ball.x = 512;
     ball.y = 360;
 }
+
+void resetVelocity(Vec2& velocity)
+{
+    velocity.x = 0.1;
+    velocity.y = 0.1;
+}
+
+void increaseVelocity(Vec2& velocity)
+{
+    velocity.x += 0.05;
+    velocity.y += 0.05;
+}
+
+void decreaseVelocity(Vec2& velocity)
+{
+    velocity.x -= 0.05;
+    velocity.y -= 0.05;
+}
+
 
 void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, SDL_FRect& paddleRight)
 {
@@ -74,6 +93,7 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, 
     {
         scorePlayer2++;
         scoreChanged = true;
+        resetVelocity(velocity);
         resetBall(ball);
     }
     //Right wall
@@ -81,17 +101,20 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, 
     {
         scorePlayer1++;
         scoreChanged = true;
+        resetVelocity(velocity);
         resetBall(ball);
     }
 
     if (SDL_HasRectIntersectionFloat(&ball, &paddleLeft))
     {
+        decreaseVelocity(velocity);
         velocity.x = std::abs(velocity.x);
         ball.x = paddleLeft.x + paddleLeft.w;
     }
 
     if (SDL_HasRectIntersectionFloat(&ball, &paddleRight))
     {
+        increaseVelocity(velocity);
         velocity.x = -std::abs(velocity.x);
         ball.x = paddleRight.x - ball.w;
     }
@@ -240,10 +263,10 @@ int main()
             break;
         }
         //DEBUG
-        SDL_Log("paddleRight.x %f", paddleRight.x);
-        SDL_Log("paddleRight.y %f", paddleRight.y);
-        SDL_Log("ball.x %f", ball.x);
-        SDL_Log("ball.y %f", ball.y);
+        //SDL_Log("paddleRight.x %f", paddleRight.x);
+        //SDL_Log("paddleRight.y %f", paddleRight.y);
+        //SDL_Log("ball.x %f", ball.x);
+        //SDL_Log("ball.y %f", ball.y);
     }
     TTF_CloseFont(font);
     SDL_DestroyTexture(texture1);
