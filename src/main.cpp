@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include "SDL3_mixer/SDL_mixer.h"
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>
 #include <cstdlib>
@@ -11,6 +12,7 @@ double deltaTime = 0;
 const uint16_t resolutionWidth = 1024;
 const uint16_t resolutionHeight = 768;
 const char* fontPath = "../assets/Roboto-Medium.ttf";
+const char* audioPath= "../assets/goofy-spring-sound.mp3";
 uint8_t scorePlayer1 = 0;
 uint8_t scorePlayer2 = 0;
 SDL_Surface* textSurface1;
@@ -155,6 +157,11 @@ int main()
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;
     TTF_Init();
+
+    if (!SDL_Init(SDL_INIT_AUDIO)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init failed: %s", SDL_GetError());
+        return 1;
+    }
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
         return 3;
@@ -193,6 +200,11 @@ int main()
     SDL_DestroySurface(textSurface1);
     SDL_DestroySurface(textSurface2);
 
+    //audio
+    MIX_CreateMixerDevice(0, nullptr);
+    Mix_Chunk* sound = Mix_LoadWAV(audioPath);
+    Mix_PlayChannel(-1, sound, 0);
+
     while (!quit_the_app) {
         if(scoreChanged) {
             textSurface1 = createSurface(font, scorePlayer1, whiteColour);
@@ -210,8 +222,8 @@ int main()
             quit_the_app = true;
         }
         if (event.type == SDL_EVENT_KEY_DOWN) {
-            /* the pressed key was Escape? */
-            SDL_Log("Key %s pressed", SDL_GetKeyName(event.key.key));
+            //DEBUG
+            //SDL_Log("Key %s pressed", SDL_GetKeyName(event.key.key));
             if (event.key.key == SDLK_ESCAPE) {
                 quit_the_app = true;
             }
@@ -273,6 +285,8 @@ int main()
     SDL_DestroyTexture(texture2);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    Mix_FreeChunk(sound);
+    Mix_CloseAudio();
     TTF_Quit();
     SDL_Quit();
 

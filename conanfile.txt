@@ -1,6 +1,7 @@
 [requires]
 sdl/3.4.0
 sdl_ttf/3.2.2
+sdl_mixer/3.2.0
 [generators]
 CMakeDeps
 CMakeToolchain
