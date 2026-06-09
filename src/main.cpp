@@ -20,6 +20,7 @@ SDL_Surface* textSurface2;
 SDL_Texture *texture1;
 SDL_Texture *texture2;
 bool scoreChanged = false;
+MIX_Track* track;
 
 // (1, 0) represents the direction to the right, (0, 1) represents the direction down
 struct Vec2
@@ -107,15 +108,21 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, 
         resetBall(ball);
     }
 
+    //left paddle collision
     if (SDL_HasRectIntersectionFloat(&ball, &paddleLeft))
     {
+        MIX_StopTrack(track, 0);
+        MIX_PlayTrack(track, 0);
         decreaseVelocity(velocity);
         velocity.x = std::abs(velocity.x);
         ball.x = paddleLeft.x + paddleLeft.w;
     }
 
+    //right paddle 
     if (SDL_HasRectIntersectionFloat(&ball, &paddleRight))
     {
+        MIX_StopTrack(track, 0);
+        MIX_PlayTrack(track, 0);
         increaseVelocity(velocity);
         velocity.x = -std::abs(velocity.x);
         ball.x = paddleRight.x - ball.w;
@@ -145,7 +152,7 @@ int main()
     SDL_Color whiteColour = {255, 255, 255, 255};
     SDL_Window *window;
     SDL_FRect paddleLeft = {50, 50, 50, 100};
-    SDL_FRect paddleRight = {924, 50, 50, 100};
+    SDL_FRect paddleRight = {924, 600, 50, 100};
     SDL_FRect ball = {512, 360, 15, 15};
     //Note: make rand starting velocity
     //float randomSeed = SDL_randf();
@@ -158,10 +165,11 @@ int main()
     Uint64 LAST = 0;
     TTF_Init();
 
-    if (!SDL_Init(SDL_INIT_AUDIO)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init failed: %s", SDL_GetError());
+    if (!MIX_Init()) {
+        SDL_Log("MIX_Init failed: %s", SDL_GetError());
         return 1;
     }
+
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
         return 3;
@@ -201,9 +209,27 @@ int main()
     SDL_DestroySurface(textSurface2);
 
     //audio
-    MIX_CreateMixerDevice(0, nullptr);
-    Mix_Chunk* sound = Mix_LoadWAV(audioPath);
-    Mix_PlayChannel(-1, sound, 0);
+    //set up mixer
+    MIX_Mixer* mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+    
+    if (!mixer) {
+        SDL_Log("Couldn't create mixer: %s", SDL_GetError());
+        return 1;
+    }
+
+    //load audio file
+    MIX_Audio* audio = MIX_LoadAudio(mixer, audioPath, false);
+
+    if (!audio) {
+        SDL_Log("Couldn't load audio: %s", SDL_GetError());
+        MIX_DestroyMixer(mixer);
+        return 1;
+    }
+
+    track = MIX_CreateTrack(mixer);
+
+    //loads the audio into the track
+    MIX_SetTrackAudio(track, audio);
 
     while (!quit_the_app) {
         if(scoreChanged) {
@@ -285,8 +311,8 @@ int main()
     SDL_DestroyTexture(texture2);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-    Mix_FreeChunk(sound);
-    Mix_CloseAudio();
+    MIX_DestroyAudio(audio);
+    MIX_DestroyMixer(mixer);
     TTF_Quit();
     SDL_Quit();
 
