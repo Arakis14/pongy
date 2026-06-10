@@ -149,6 +149,7 @@ int main()
 {
     //initialize variables
     bool quit_the_app = false;
+    bool paused = false;
     SDL_Color whiteColour = {255, 255, 255, 255};
     SDL_Window *window;
     SDL_FRect paddleLeft = {50, 50, 50, 100};
@@ -232,6 +233,24 @@ int main()
     MIX_SetTrackAudio(track, audio);
 
     while (!quit_the_app) {
+        LAST = NOW;
+        NOW = SDL_GetPerformanceCounter();
+        deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency());
+
+        if (paused) {
+            SDL_WaitEvent(&event);
+            if (event.type == SDL_EVENT_KEY_DOWN) {
+                if (event.key.key == SDLK_ESCAPE) {
+                    quit_the_app = true;
+                }
+                if (event.key.key == SDLK_P) {
+                    paused = !paused;
+                    NOW = SDL_GetPerformanceCounter();
+                }
+            }
+            continue;
+        }
+
         if(scoreChanged) {
             textSurface1 = createSurface(font, scorePlayer1, whiteColour);
             textSurface2 = createSurface(font, scorePlayer2, whiteColour);
@@ -239,39 +258,42 @@ int main()
             texture2 = createTexture(renderer, textSurface2);
             scoreChanged = false;
         }
-        LAST = NOW;
-        NOW = SDL_GetPerformanceCounter();
-
-        deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency() );
-        SDL_PollEvent(&event);
-        if (event.type == SDL_EVENT_QUIT) {
-            quit_the_app = true;
-        }
-        if (event.type == SDL_EVENT_KEY_DOWN) {
-            //DEBUG
-            //SDL_Log("Key %s pressed", SDL_GetKeyName(event.key.key));
-            if (event.key.key == SDLK_ESCAPE) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
                 quit_the_app = true;
             }
-            else if(event.key.key == SDLK_DOWN) {
-                if(checkHeight(paddleRight) < resolutionHeight - paddleRight.h) {
-                    decreaseHeight(paddleRight);
-                }
+            if (event.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
+                paused = true;
             }
-            else if(event.key.key == SDLK_UP) {
-                if(checkHeight(paddleRight) > 0.00) {
-                    increaseHeight(paddleRight);
+            if (event.type == SDL_EVENT_KEY_DOWN) {
+                //DEBUG
+                //SDL_Log("Key %s pressed", SDL_GetKeyName(event.key.key));
+                if (event.key.key == SDLK_ESCAPE) {
+                    quit_the_app = true;
                 }
-            }
-            else if (event.key.key == SDLK_S) {
-                if(checkHeight(paddleLeft) < resolutionHeight - paddleLeft.h) {
-                    decreaseHeight(paddleLeft);
+                else if(event.key.key == SDLK_DOWN) {
+                    if(checkHeight(paddleRight) < resolutionHeight - paddleRight.h) {
+                        decreaseHeight(paddleRight);
+                    }
                 }
-            }
-            else if (event.key.key == SDLK_W) {
-                if(checkHeight(paddleLeft) > 0.00) {
-                    increaseHeight(paddleLeft);
+                else if(event.key.key == SDLK_UP) {
+                    if(checkHeight(paddleRight) > 0.00) {
+                        increaseHeight(paddleRight);
+                    }
                 }
+                else if (event.key.key == SDLK_S) {
+                    if(checkHeight(paddleLeft) < resolutionHeight - paddleLeft.h) {
+                        decreaseHeight(paddleLeft);
+                    }
+                }
+                else if (event.key.key == SDLK_W) {
+                    if(checkHeight(paddleLeft) > 0.00) {
+                        increaseHeight(paddleLeft);
+                    }
+                }
+                else if (event.key.key == SDLK_P) {
+                        paused = !paused;
+                    }
             }
         }
         SDL_SetRenderTarget(renderer, texture1);
