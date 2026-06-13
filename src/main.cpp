@@ -36,14 +36,14 @@ double checkHeight(SDL_FRect& paddle)
 
 void increaseHeight(SDL_FRect& paddle)
 {
-    paddle.y -= 2 * speedMulti * deltaTime;
+    paddle.y += 2 * speedMulti * deltaTime;
     //DEBUG
     //SDL_Log("New paddle y: %f", paddle.y);
 }
 
 void decreaseHeight(SDL_FRect& paddle)
 {
-    paddle.y += 2 * speedMulti * deltaTime;
+    paddle.y -= 2 * speedMulti * deltaTime;
     //DEBUG
     //SDL_Log("New paddle y: %f", paddle.y);
 }
@@ -128,6 +128,25 @@ void changeBallPosition(SDL_FRect& ball, Vec2& velocity, SDL_FRect& paddleLeft, 
         ball.x = paddleRight.x - ball.w;
     }
 
+}
+
+void followBall(SDL_FRect& ball, SDL_FRect& paddleLeft)
+{
+    if(checkHeight(paddleLeft) < ball.y)
+    {
+        if(checkHeight(paddleLeft) < resolutionHeight - paddleLeft.h)
+        {
+            increaseHeight(paddleLeft);
+        }
+    }
+
+    if(checkHeight(paddleLeft) > ball.y)    
+    {
+        if(checkHeight(paddleLeft) > 0.00)
+        {
+            decreaseHeight(paddleLeft);
+        }
+    }
 }
 
 bool checkIfGameOver()
@@ -273,14 +292,15 @@ int main()
                 }
                 else if(event.key.key == SDLK_DOWN) {
                     if(checkHeight(paddleRight) < resolutionHeight - paddleRight.h) {
-                        decreaseHeight(paddleRight);
+                        increaseHeight(paddleRight);
                     }
                 }
                 else if(event.key.key == SDLK_UP) {
                     if(checkHeight(paddleRight) > 0.00) {
-                        increaseHeight(paddleRight);
+                        decreaseHeight(paddleRight);
                     }
                 }
+/*
                 else if (event.key.key == SDLK_S) {
                     if(checkHeight(paddleLeft) < resolutionHeight - paddleLeft.h) {
                         decreaseHeight(paddleLeft);
@@ -291,11 +311,13 @@ int main()
                         increaseHeight(paddleLeft);
                     }
                 }
+*/
                 else if (event.key.key == SDLK_P) {
                         paused = !paused;
                     }
             }
         }
+        followBall(ball, paddleLeft);
         SDL_SetRenderTarget(renderer, texture1);
         SDL_SetRenderTarget(renderer, texture2);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -322,6 +344,7 @@ int main()
         if (checkIfGameOver()) {
             break;
         }
+        //AI
         //DEBUG
         //SDL_Log("paddleRight.x %f", paddleRight.x);
         //SDL_Log("paddleRight.y %f", paddleRight.y);
